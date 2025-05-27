@@ -1,0 +1,6 @@
+/* Custom styles for the Store Companion App can be added here. */
+
+/* Styles for views to ensure they are hidden by default if needed */
+.view {
+    /* display: none; */ /* This is already handled inline in index.html for initial setup */
+}
