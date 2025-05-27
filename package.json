@@ -1,0 +1,28 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/santanderelias/store_app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/santanderelias/store_app/issues"
+  },
+  "homepage": "https://github.com/santanderelias/store_app#readme",
+  "devDependencies": {
+    "electron": "^36.3.1"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "sqlite3": "^5.1.7"
+  }
+}

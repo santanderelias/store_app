@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Store Management App</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1, h2 { text-align: center; color: #333; }
+        .form-container { display: flex; justify-content: space-around; margin-bottom: 20px; }
+        .form-section { width: 45%; padding: 20px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9;}
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="password"], input[type="email"] { width: calc(100% - 22px); padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%; }
+        button:hover { background-color: #0056b3; }
+        .error-message { color: red; text-align: center; margin-bottom: 10px; }
+        .success-message { color: green; text-align: center; }
+        #main-content { display: none; }
+        #auth-forms { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Store Management System</h1>
+
+        <div id="auth-forms">
+            <div class="form-container">
+                <div class="form-section" id="registration-form-section">
+                    <h2>Register</h2>
+                    <form id="register-form">
+                        <div>
+                            <label for="reg-username">Username:</label>
+                            <input type="text" id="reg-username" required>
+                        </div>
+                        <div>
+                            <label for="reg-password">Password:</label>
+                            <input type="password" id="reg-password" required>
+                        </div>
+                        <div>
+                            <label for="reg-role">Role (admin/user):</label>
+                            <input type="text" id="reg-role" value="user" required>
+                        </div>
+                        <button type="submit">Register</button>
+                        <p id="register-message" class="error-message"></p>
+                    </form>
+                </div>
+
+                <div class="form-section" id="login-form-section">
+                    <h2>Login</h2>
+                    <form id="login-form">
+                        <div>
+                            <label for="login-username">Username:</label>
+                            <input type="text" id="login-username" required>
+                        </div>
+                        <div>
+                            <label for="login-password">Password:</label>
+                            <input type="password" id="login-password" required>
+                        </div>
+                        <button type="submit">Login</button>
+                        <p id="login-message" class="error-message"></p>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="main-content">
+            <div style="padding: 10px; background-color: #f8f9fa; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center;">
+                <h2 id="welcome-message" style="margin:0;"></h2>
+                <div>
+                    <div id="offline-indicator" style="display: none; color: red; font-weight: bold; margin-right: 15px; background-color: #ffe0e0; padding: 5px 10px; border-radius: 4px;">Offline Mode - Sales will be synced later.</div>
+                    <button id="sync-sales-btn" style="margin-right: 10px; padding: 5px 10px; background-color: #ffc107; display:none;">Sync Pending Sales (0)</button>
+                    <button id="toggle-online-btn" style="margin-right: 10px; padding: 5px 10px;">Toggle Online Status</button>
+                    <button id="logout-button" style="padding: 8px 12px;">Logout</button>
+                </div>
+            </div>
+            
+            <div id="inventory-management-section" style="margin-top: 20px;">
+                <h3>Inventory Management</h3>
+                <div style="display: flex; justify-content: space-between;">
+                    <!-- Product Management -->
+                    <div style="width: 65%;">
+                        <h4>Products</h4>
+                        <button id="show-add-product-form-button">Add New Product</button>
+                        <table id="products-table" style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #ddd; padding: 8px;">Name</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px;">Price</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px;">Quantity</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px;">Category</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="products-table-body">
+                                <!-- Product rows will be inserted here by renderer.js -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Category Management -->
+                    <div style="width: 30%;">
+                        <h4>Categories</h4>
+                        <form id="add-category-form" style="margin-bottom: 10px;">
+                            <label for="category-name">New Category Name:</label>
+                            <input type="text" id="category-name" required style="width: calc(100% - 22px); padding: 8px; margin-bottom: 5px;">
+                            <button type="submit" style="padding: 8px 12px;">Add Category</button>
+                            <p id="category-message" class="error-message"></p>
+                        </form>
+                        <ul id="categories-list" style="list-style-type: none; padding: 0;">
+                            <!-- Category items will be inserted here by renderer.js -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add/Edit Product Modal/Form -->
+            <div id="product-form-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center;">
+                <div style="background-color: white; padding: 25px; border-radius: 8px; width: 450px; box-shadow: 0 0 15px rgba(0,0,0,0.2);">
+                    <h3 id="product-form-title">Add Product</h3>
+                    <form id="product-form">
+                        <input type="hidden" id="product-id">
+                        <div>
+                            <label for="product-name">Name:</label>
+                            <input type="text" id="product-name" required>
+                        </div>
+                        <div>
+                            <label for="product-description">Description:</label>
+                            <textarea id="product-description" rows="3" style="width: calc(100% - 22px); padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;"></textarea>
+                        </div>
+                        <div>
+                            <label for="product-price">Price:</label>
+                            <input type="number" id="product-price" step="0.01" required>
+                        </div>
+                        <div>
+                            <label for="product-quantity">Quantity:</label>
+                            <input type="number" id="product-quantity" required>
+                        </div>
+                        <div>
+                            <label for="product-category">Category:</label>
+                            <select id="product-category" required>
+                                <!-- Options populated by renderer.js -->
+                            </select>
+                        </div>
+                        <div>
+                            <label for="product-supplier">Supplier:</label>
+                            <select id="product-supplier">
+                                <option value="">Select Supplier (Optional)</option>
+                                <!-- Options populated by renderer.js -->
+                            </select>
+                        </div>
+                        <div>
+                            <label for="product-low-stock">Low Stock Threshold:</label>
+                            <input type="number" id="product-low-stock" value="0" required>
+                        </div>
+                        <button type="submit" id="save-product-button" style="margin-top:10px;">Save Product</button>
+                        <button type="button" id="cancel-product-form-button" style="margin-top:10px; background-color: #6c757d;">Cancel</button>
+                        <p id="product-form-message" class="error-message"></p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Supplier Management Section -->
+            <div id="supplier-management-section" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                <h3>Supplier Management</h3>
+                <button id="show-add-supplier-form-button">Add New Supplier</button>
+                <table id="suppliers-table" style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Name</th>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Contact Info</th>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="suppliers-table-body">
+                        <!-- Supplier rows will be inserted here by renderer.js -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Add/Edit Supplier Modal/Form -->
+            <div id="supplier-form-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center;">
+                <div style="background-color: white; padding: 25px; border-radius: 8px; width: 450px; box-shadow: 0 0 15px rgba(0,0,0,0.2);">
+                    <h3 id="supplier-form-title">Add Supplier</h3>
+                    <form id="supplier-form">
+                        <input type="hidden" id="supplier-id">
+                        <div>
+                            <label for="supplier-name">Name:</label>
+                            <input type="text" id="supplier-name" required>
+                        </div>
+                        <div>
+                            <label for="supplier-contact">Contact Info:</label>
+                            <textarea id="supplier-contact" rows="3" style="width: calc(100% - 22px); padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;"></textarea>
+                        </div>
+                        <button type="submit" id="save-supplier-button" style="margin-top:10px;">Save Supplier</button>
+                        <button type="button" id="cancel-supplier-form-button" style="margin-top:10px; background-color: #6c757d;">Cancel</button>
+                        <p id="supplier-form-message" class="error-message"></p>
+                    </form>
+                </div>
+            </div>
+
+
+            <!-- Point of Sale (POS) Section -->
+            <div id="pos-section" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                <h3>Point of Sale</h3>
+                <div style="display: flex; justify-content: space-between;">
+                    <!-- Left Panel: Product Search and Current Sale -->
+                    <div style="width: 60%;">
+                        <h4>Add Products to Sale</h4>
+                        <div style="margin-bottom: 15px;">
+                            <label for="pos-product-search">Search Product (Name/ID):</label>
+                            <input type="text" id="pos-product-search" style="width: 70%;">
+                            <div id="pos-search-results" style="max-height: 150px; overflow-y: auto; border: 1px solid #ccc; padding: 5px; margin-top:5px;">
+                                <!-- Search results will appear here -->
+                            </div>
+                        </div>
+
+                        <h4>Current Sale Items</h4>
+                        <table id="pos-current-sale-table" style="width: 100%; border-collapse: collapse; margin-bottom:15px;">
+                            <thead>
+                                <tr>
+                                    <th style="border: 1px solid #ddd; padding: 8px;">Product</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px;">Qty</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px;">Price</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px;">Total</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pos-current-sale-body">
+                                <!-- Items added to sale will appear here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Right Panel: Sale Summary and Payment -->
+                    <div style="width: 35%; padding-left: 20px; border-left: 1px solid #eee;">
+                        <h4>Sale Summary</h4>
+                        <div style="margin-bottom: 10px;">
+                            <span>Subtotal:</span>
+                            <span id="pos-subtotal" style="float: right;">$0.00</span>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <span>Tax (5%):</span>
+                            <span id="pos-tax" style="float: right;">$0.00</span>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <label for="pos-discount">Manual Discount:</label>
+                            <input type="number" id="pos-discount" value="0" step="0.01" style="width: 60px; float: right;">
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <label for="pos-promotion-select">Apply Promotion:</label>
+                            <select id="pos-promotion-select" style="width: calc(100% - 130px); float: right;">
+                                <option value="">None</option>
+                                <!-- Active promotions will be populated here -->
+                            </select>
+                        </div>
+                        <div style="clear:both; margin-bottom: 10px;">
+                            <span>Promotion Discount:</span>
+                            <span id="pos-promotion-discount-amount" style="float: right;">$0.00</span>
+                        </div>
+                        <hr>
+                        <div style="margin-bottom: 15px; font-weight: bold; font-size: 1.2em;">
+                            <span>Grand Total:</span>
+                            <span id="pos-grand-total" style="float: right;">$0.00</span>
+                        </div>
+                        
+                        <h4>Payment</h4>
+                        <div style="margin-bottom: 10px;">
+                            <button class="payment-method-button" data-method="Cash">Cash</button>
+                            <button class="payment-method-button" data-method="Card">Card</button>
+                            <button id="pay-with-gift-card-button" style="margin-left: 5px;">Use Gift Card</button>
+                            <input type="hidden" id="pos-payment-method" value="Cash"> 
+                        </div>
+                        <div id="gift-card-payment-area" style="display:none; margin-bottom:10px; padding:10px; border:1px solid #eee;">
+                            <label for="gift-card-number-input">Gift Card Number:</label>
+                            <input type="text" id="gift-card-number-input" style="width: calc(70% - 10px);">
+                            <button id="verify-gift-card-button" style="width: 30%;">Verify</button>
+                            <p id="gift-card-message" style="margin-top:5px;"></p>
+                            <p><strong>Applied Gift Card Payment:</strong> $<span id="gift-card-applied-amount">0.00</span></p>
+                        </div>
+                        <button id="process-sale-button" style="width: 100%; padding: 12px; background-color: #28a745; color: white;">Process Sale</button>
+                        <p id="pos-message" class="error-message" style="margin-top:10px;"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Gift Card Management Section -->
+            <div id="gift-card-management-section" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                <h3>Gift Card Management</h3>
+                <div id="issue-gift-card-form-section" style="margin-bottom: 20px; padding:15px; border:1px solid #ddd; border-radius:5px;">
+                    <h4>Issue New Gift Card</h4>
+                    <form id="issue-gift-card-form">
+                        <div>
+                            <label for="gc-card-number">Card Number:</label>
+                            <input type="text" id="gc-card-number" required>
+                            <button type="button" id="generate-gc-number-button" style="margin-left:5px;">Generate</button>
+                        </div>
+                        <div>
+                            <label for="gc-balance">Initial Balance ($):</label>
+                            <input type="number" id="gc-balance" step="0.01" min="0.01" required>
+                        </div>
+                        <div>
+                            <label for="gc-expiry-date">Expiry Date:</label>
+                            <input type="date" id="gc-expiry-date" required>
+                        </div>
+                        <button type="submit">Issue Gift Card</button>
+                        <p id="issue-gc-message" class="error-message"></p>
+                    </form>
+                </div>
+
+                <h4>Existing Gift Cards</h4>
+                <table id="gift-cards-table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Card Number</th>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Balance</th>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Issue Date</th>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Expiry Date</th>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gift-cards-table-body">
+                        <!-- Gift card rows will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+
+
+            <!-- Sale Receipt Modal -->
+            <div id="receipt-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); justify-content: center; align-items: center;">
+                <div style="background-color: white; padding: 30px; border-radius: 8px; width: 350px; box-shadow: 0 0 20px rgba(0,0,0,0.25); text-align: center;">
+                    <h3 id="receipt-title">Sale Completed!</h3>
+                    <p><strong>Sale ID:</strong> <span id="receipt-sale-id"></span></p>
+                    <p><strong>Date:</strong> <span id="receipt-date"></span></p>
+                    <div id="receipt-items" style="text-align: left; margin: 15px 0; border-top: 1px dashed #ccc; border-bottom: 1px dashed #ccc; padding: 10px 0;">
+                        <!-- Items will be listed here -->
+                    </div>
+                    <p>Subtotal: <span id="receipt-subtotal"></span></p>
+                    <p>Tax: <span id="receipt-tax"></span></p>
+                    <p>Promotion Discount: <span id="receipt-promo-discount"></span></p>
+                    <p>Manual Discount: <span id="receipt-manual-discount"></span></p>
+                    <p>Gift Card Payment: <span id="receipt-gift-card-payment"></span></p>
+                    <p style="font-weight: bold;"><strong>Total Paid (Actual):</strong> <span id="receipt-total-paid"></span></p>
+                    <p style="font-weight: bold;"><strong>Amount Due (Cash/Card):</strong> <span id="receipt-amount-due"></span></p>
+                    <button id="close-receipt-modal-button" style="padding: 10px 20px; margin-top: 20px;">Close</button>
+                </div>
+            </div>
+
+            <!-- Promotion Management Section -->
+            <div id="promotion-management-section" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                <h3>Promotion Management</h3>
+                <button id="show-add-promotion-form-button">Add New Promotion</button>
+                <table id="promotions-table" style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Name</th>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Type</th>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Value</th>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Start Date</th>
+                            <th style="border: 1px solid #ddd; padding: 8px;">End Date</th>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="promotions-table-body">
+                        <!-- Promotion rows will be inserted here by renderer.js -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Add/Edit Promotion Modal/Form -->
+            <div id="promotion-form-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center;">
+                <div style="background-color: white; padding: 25px; border-radius: 8px; width: 500px; box-shadow: 0 0 15px rgba(0,0,0,0.2);">
+                    <h3 id="promotion-form-title">Add Promotion</h3>
+                    <form id="promotion-form">
+                        <input type="hidden" id="promotion-id">
+                        <div>
+                            <label for="promotion-name">Name:</label>
+                            <input type="text" id="promotion-name" required>
+                        </div>
+                        <div>
+                            <label for="promotion-description">Description:</label>
+                            <textarea id="promotion-description" rows="2" style="width: calc(100% - 22px); padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px;"></textarea>
+                        </div>
+                        <div>
+                            <label for="promotion-type">Type:</label>
+                            <select id="promotion-type" required>
+                                <option value="">Select Type</option>
+                                <option value="percentage_off_total">Percentage Off Total</option>
+                                <option value="fixed_amount_off_total">Fixed Amount Off Total</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="promotion-value">Value:</label>
+                            <input type="number" id="promotion-value" step="0.01" required>
+                        </div>
+                        <div>
+                            <label for="promotion-start-date">Start Date:</label>
+                            <input type="datetime-local" id="promotion-start-date" required>
+                        </div>
+                        <div>
+                            <label for="promotion-end-date">End Date:</label>
+                            <input type="datetime-local" id="promotion-end-date" required>
+                        </div>
+                        <button type="submit" id="save-promotion-button" style="margin-top:10px;">Save Promotion</button>
+                        <button type="button" id="cancel-promotion-form-button" style="margin-top:10px; background-color: #6c757d;">Cancel</button>
+                        <p id="promotion-form-message" class="error-message"></p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Reporting Section -->
+            <div id="reporting-section" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                <h3>Reporting & Analytics</h3>
+                <div id="report-filters" style="margin-bottom: 20px; padding:15px; border:1px solid #ddd; border-radius:5px;">
+                    <h4>Report Filters</h4>
+                    <label for="report-start-date">Start Date:</label>
+                    <input type="date" id="report-start-date" style="margin-right: 10px;">
+                    <label for="report-end-date">End Date:</label>
+                    <input type="date" id="report-end-date" style="margin-right: 10px;">
+                    <label for="report-limit">Limit (for Popular Products):</label>
+                    <input type="number" id="report-limit" value="5" min="1" style="width: 60px; margin-right: 20px;">
+                    
+                    <button id="generate-sales-report-button" class="report-button">Sales Report</button>
+                    <button id="generate-popular-products-button" class="report-button">Popular Products</button>
+                    <button id="generate-stock-value-button" class="report-button">Current Stock Value</button>
+                    <button id="generate-transaction-summary-button" class="report-button">Transaction Summary</button>
+                    <hr style="margin-top: 15px; margin-bottom: 10px;">
+                    <button id="export-sales-summary-csv-button" class="report-button" style="background-color: #17a2b8;">Export Sales Summary (CSV)</button>
+                    <button id="export-inventory-valuation-csv-button" class="report-button" style="background-color: #17a2b8;">Export Inventory Valuation (CSV)</button>
+                </div>
+
+                <div id="report-display-area" style="margin-top: 20px; padding:15px; border:1px solid #ddd; border-radius:5px; min-height: 100px; background-color: #f9f9f9;">
+                    <h4>Report Results</h4>
+                    <div id="report-content">
+                        <p>Select report options and click a button to generate a report.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>
